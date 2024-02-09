@@ -26,6 +26,7 @@ float theta2array[100];
 long arrayindex = 0;
 int UARTprint = 0;
 
+//print variables
 float printtheta1motor = 0;
 float printtheta2motor = 0;
 float printtheta3motor = 0;
@@ -41,10 +42,24 @@ float L1 = 0.254;
 float L2 = 0.254;
 float L3 = 0.254;
 
-//assigning thetas and xyz from Matlab
+//values that we need to print (part 2 of lab1)
 float x = 0;
 float y = 0;
 float z = 0;
+
+float theta1 = 0;
+float theta2 = 0;
+float theta3 = 0;
+
+float theta1IK_DH = 0;
+float theta2IK_DH = 0;
+float theta3IK_DH = 0;
+
+float theta1IK_motor = 0;
+float theta2IK_motor = 0;
+float theta3IK_motor = 0;
+
+
 
 void mains_code(void);
 
@@ -53,7 +68,7 @@ void mains_code(void);
 //
 void main(void)
 {
-	mains_code();
+    mains_code();
 }
 
 
@@ -88,18 +103,27 @@ void lab(float theta1motor,float theta2motor,float theta3motor,float *tau1,float
         GpioDataRegs.GPBTOGGLE.bit.GPIO60 = 1; // Blink LED on Emergency Stop Box
     }
 
+    //equations to convert measured thetas in terms of theta motors
+    theta1 = theta1motor;
+    theta2 = theta2motor - PI/2;
+    theta3 = -theta2motor + theta3motor + PI/2;
+
+    //Foward Kinematics equations in terms of thetamotors (part1 Lab1, calcuations done in MATLAB)
     x = (127.0*cos(theta1motor)*(cos(theta3motor) + sin(theta2motor)))/500.0;
     y = (127.0*sin(theta1motor)*(cos(theta3motor) + sin(theta2motor)))/500.0;
     z = (127.0*cos(theta2motor))/500.0 - (127.0*sin(theta3motor))/500.0 + 127.0/500.0;
 
-//    H = {cos(theta1)*cos(thetaM_3), -cos(theta1)*sin(thetaM_3), -sin(theta1),       (127*cos(theta1)*(cos(thetaM_3) + sin(thetaM_2)))/500}
-//         {cos(thetaM_3)*sin(theta1), -sin(theta1)*sin(thetaM_3),  cos(theta1),       (127*sin(theta1)*(cos(thetaM_3) + sin(thetaM_2)))/500}
-//         {-sin(thetaM_3),             -cos(thetaM_3),            0, (127*cos(thetaM_2))/500 - (127*sin(thetaM_3))/500 + 127/500}
-//         {0,                         0,                         0,         1}
-//    };
+    //measured thetas calcuated from geometric Inverse Kinematics (part2 of Lab 1)
+    theta1IK_DH = atan(y/x);
+    theta2IK_DH = -atan( (z-L1)/sqrt(pow(x,2)+pow(y,2)) ) - acos( (pow(L2,2)+pow(x,2)+pow(y,2)+pow((z-L1),2)-pow(L3,2)) / (2*L2*sqrt(pow(x,2)+pow(y,2)+pow((z-L1),2))) );
+    theta3IK_DH =  PI - acos((pow(L2,2)+pow(L3,2)-(pow(x,2)+pow(y,2)+pow(z-L1,2)))/(2*L2*L3));
 
-//    P0 = H*P3;
+    //converting IK thetas to theta motors instead
+    theta1IK_motor = theta1IK_DH;
+    theta2IK_motor = theta2IK_DH + PI/2;
+    theta3IK_motor = theta3IK_DH + theta2IK_motor - PI/2;
 
+    //sets theta motors to printable variables. print variables are global variables
     printtheta1motor = theta1motor;
     printtheta2motor = theta2motor;
     printtheta3motor = theta3motor;
@@ -114,7 +138,8 @@ void lab(float theta1motor,float theta2motor,float theta3motor,float *tau1,float
 
 void printing(void){
     if (whattoprint == 0) {
-        serial_printf(&SerialA, "Theta1: %.2f, Theta2: %.2f, Theta3: %.2f, (x y z) = %.2f %.2f %.2f  \n\r",printtheta1motor*180/PI,printtheta2motor*180/PI,printtheta3motor*180/PI, x, y ,z);
+        serial_printf(&SerialA, "Motor Thetas:(%.2f, %.2f, %.2f), FK (xyz): (%.2f, %.2f, %.2f)  \n\r",printtheta1motor*180/PI,printtheta2motor*180/PI,printtheta3motor*180/PI, x, y,z);
+        serial_printf(&SerialA,"IK Motor Thetas: (%.2f, %.2f, %.2f), DH Thetas:  (%.2f, %.2f, %.2f)  \n\r",theta1IK_motor*180/PI,theta2IK_motor*180/PI,theta3IK_motor*180/PI,theta1IK_DH*180/PI,theta2IK_DH*180/PI,theta3IK_DH*180/PI);
     } else {
         serial_printf(&SerialA, "Print test   \n\r");
     }
