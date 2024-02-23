@@ -7,8 +7,8 @@
 #define GRAV        9.81
 
 // These two offsets are only used in the main file user_CRSRobot.c  You just need to create them here and find the correct offset and then these offset will adjust the encoder readings
-float offset_Enc2_rad = -0.37;
-float offset_Enc3_rad = 0.27;
+float offset_Enc2_rad = -0.45; //-0.37;
+float offset_Enc3_rad = 0.23; //0.27;
 
 
 // Your global varialbes.
@@ -17,13 +17,16 @@ long mycount = 0;
 
 #pragma DATA_SECTION(whattoprint, ".my_vars")
 float whattoprint = 0.0;
+float something = 0.0;
 
 #pragma DATA_SECTION(theta1array, ".my_arrs")
 float theta1array[100];
+float theta2array[100];
 
 long arrayindex = 0;
 int UARTprint = 0;
 
+//print variables
 float printtheta1motor = 0;
 float printtheta2motor = 0;
 float printtheta3motor = 0;
@@ -34,6 +37,77 @@ float Simulink_PlotVar2 = 0;
 float Simulink_PlotVar3 = 0;
 float Simulink_PlotVar4 = 0;
 
+// Assign length  values
+float L1 = 0.254;
+float L2 = 0.254;
+float L3 = 0.254;
+
+//values that we need to print (part 2 of lab1)
+float x = 0;
+float y = 0;
+float z = 0;
+
+float theta1 = 0;
+float theta2 = 0;
+float theta3 = 0;
+
+float theta1IK_DH = 0;
+float theta2IK_DH = 0;
+float theta3IK_DH = 0;
+
+float theta1IK_motor = 0;
+float theta2IK_motor = 0;
+float theta3IK_motor = 0;
+
+//lab 2 global variables
+float theta_d1 = 0;
+float theta_d2 = 0;
+float theta_d3 = 0;
+
+float Kp1 = 12; //12 
+float Kp2 = 100; //100
+float Kp3 = 120; //120
+float KD1 = 0.9; // 0.9
+float KD2 = 4; //4
+float KD3 = 6; //6
+
+//variables for 2nd method of filtering velocity
+float Theta1_old = 0;
+float Omega1_old1 = 0;
+float Omega1_old2 = 0;
+float Omega1 = 0;
+
+float Theta2_old = 0;
+float Omega2_old1 = 0;
+float Omega2_old2 = 0;
+float Omega2 = 0;
+
+float Theta3_old = 0;
+float Omega3_old1 = 0;
+float Omega3_old2 = 0;
+float Omega3 = 0;
+
+float thresh = 0.01;
+float ek_1 = 0;
+float ek_1old= 0;
+float ek_2 = 0;
+float ek_2old = 0;
+float ek_3 = 0;
+float ek_3old = 0;
+
+float IK1 = 0;
+float IK1_old = 0;
+float IK2 = 0;
+float IK2_old = 0;
+float IK3 = 0;
+float IK3_old = 0;
+
+float KI1 = 0.2; // 0.2
+float KI2 = 4; //4
+float KI3 = 6; //6
+
+float dt = 0.001;
+
 
 void mains_code(void);
 
@@ -42,7 +116,7 @@ void mains_code(void);
 //
 void main(void)
 {
-	mains_code();
+    mains_code();
 }
 
 
@@ -54,7 +128,7 @@ void lab(float theta1motor,float theta2motor,float theta3motor,float *tau1,float
 
     *tau1 = 0;
     *tau2 = 0;
-    *tau3 = 0;
+    *tau3 = -1;
 
     //Motor torque limitation(Max: 5 Min: -5)
 
@@ -77,6 +151,136 @@ void lab(float theta1motor,float theta2motor,float theta3motor,float *tau1,float
         GpioDataRegs.GPBTOGGLE.bit.GPIO60 = 1; // Blink LED on Emergency Stop Box
     }
 
+    //Lab 2 part 5 
+    if ((mycount%2000)<1000) {
+
+        theta_d1 = 0;
+        theta_d2 = 0;
+        theta_d3 = 0;
+        
+    } else {
+            
+       theta_d1 = PI/6;
+       theta_d2 = PI/6;
+       theta_d3 = PI/6;
+       
+   }
+    //implementing the 2nd method of filtering velocity
+   Omega1 = (theta1motor-Theta1_old)/0.001;
+   Omega1 = (Omega1+Omega1_old1 + Omega1_old2)/3.0;
+   
+   Theta1_old = theta1motor;
+   
+   Omega1_old2 = Omega1_old1;
+   Omega1_old1 = Omega1;
+   
+   Omega2 = (theta2motor-Theta2_old)/0.001;
+   Omega2 = (Omega2+Omega2_old1 + Omega2_old2)/3.0;
+   
+   Theta2_old = theta2motor;
+   
+   Omega2_old2 = Omega2_old1;
+   Omega2_old1 = Omega2;
+   
+   Omega3 = (theta3motor-Theta3_old)/0.001;
+   Omega3 = (Omega3+Omega3_old1 + Omega3_old2)/3.0;
+   
+   Theta3_old = theta3motor;
+   
+   Omega3_old2 = Omega3_old1;
+   Omega3_old1 = Omega3;
+   
+   //implementing the integral control
+   //solving for errors 
+   ek_1old = ek_1;
+   ek_1 = theta_d1 - theta1motor;
+   
+   ek_2old = ek_2;
+   ek_2 = theta_d2 - theta1motor;
+   
+   ek_3old = ek_3;
+   ek_3 = theta_d3 - theta1motor;
+   
+   //solving for intregral tracking error
+   IK1_old = IK1;
+
+   
+   IK2_old = IK2;
+
+   IK3_old = IK3;
+
+   
+   if(fabs(ek_1)>thresh) {
+       IK1 = 0;
+   } if(fabs(*tau1)>5) {
+       IK1 = 0;
+   } else {
+       IK1 = IK1_old + ((ek_1+ek_1old)/2*dt);
+  }
+   
+   if(fabs(ek_2)>thresh) {
+      IK2 = 0;
+   } if(fabs(*tau1)>5) {
+       IK2 = 0;
+   } else {
+       IK2 = IK2_old + ((ek_2+ek_2old)/2*dt);
+  }
+   
+   if(fabs(ek_3)>thresh) {
+       IK3 = 0;
+   } if(fabs(*tau1)>5) {
+       IK3 = 0;
+   } else {
+       IK3 = IK3_old + ((ek_3+ek_3old)/2*dt);
+       
+  }
+   
+   
+    //equations to convert measured thetas in terms of theta motors
+    theta1 = theta1motor;
+    theta2 = theta2motor - PI/2;
+    theta3 = -theta2motor + theta3motor + PI/2;
+
+    //Foward Kinematics equations in terms of thetamotors (part1 Lab1, calcuations done in MATLAB)
+    x = (127.0*cos(theta1motor)*(cos(theta3motor) + sin(theta2motor)))/500.0;
+    y = (127.0*sin(theta1motor)*(cos(theta3motor) + sin(theta2motor)))/500.0;
+    z = (127.0*cos(theta2motor))/500.0 - (127.0*sin(theta3motor))/500.0 + 127.0/500.0;
+
+    //measured thetas calcuated from geometric Inverse Kinematics (part2 of Lab 1)
+    theta1IK_DH = atan(y/x);
+    theta2IK_DH = -atan( (z-L1)/sqrt(pow(x,2)+pow(y,2)) ) - acos( (pow(L2,2)+pow(x,2)+pow(y,2)+pow((z-L1),2)-pow(L3,2)) / (2*L2*sqrt(pow(x,2)+pow(y,2)+pow((z-L1),2))) );
+    theta3IK_DH =  PI - acos((pow(L2,2)+pow(L3,2)-(pow(x,2)+pow(y,2)+pow(z-L1,2)))/(2*L2*L3));
+
+    //converting IK thetas to theta motors instead
+    theta1IK_motor = theta1IK_DH;
+    theta2IK_motor = theta2IK_DH + PI/2;
+    theta3IK_motor = theta3IK_DH + theta2IK_motor - PI/2;
+
+    
+    *tau1 = Kp1*(theta_d1-theta1motor)-KD1*Omega1 + IK1*KI1;
+    *tau2 = Kp2*(theta_d2-theta2motor)-KD2*Omega2 + IK2*KI2;
+    *tau3 = Kp3*(theta_d3-theta3motor)-KD3*Omega3 + IK3*KI3;
+    
+    
+   if(*tau1>5) {
+       *tau1 =5;
+   } if (*tau1<-5){
+       *tau1 = -5;
+  }
+   
+   if(*tau2>5) {
+       *tau2 =5;
+   } if (*tau2<-5){
+       *tau2 = -5;
+   }
+   
+   if(*tau3>5) {
+       *tau3 =5;
+   } if (*tau3<-5){
+       *tau3 = -5;
+   }
+    
+    //sets theta motors to printable variables. print variables are global variables
     printtheta1motor = theta1motor;
     printtheta2motor = theta2motor;
     printtheta3motor = theta3motor;
@@ -84,14 +288,15 @@ void lab(float theta1motor,float theta2motor,float theta3motor,float *tau1,float
     Simulink_PlotVar1 = theta1motor;
     Simulink_PlotVar2 = theta2motor;
     Simulink_PlotVar3 = theta3motor;
-    Simulink_PlotVar4 = 0;
+    Simulink_PlotVar4 = theta_d3;
 
     mycount++;
 }
 
 void printing(void){
     if (whattoprint == 0) {
-        serial_printf(&SerialA, "%.2f %.2f,%.2f   \n\r",printtheta1motor*180/PI,printtheta2motor*180/PI,printtheta3motor*180/PI);
+        serial_printf(&SerialA, "Motor Thetas:(%.2f, %.2f, %.2f), FK (xyz): (%.2f, %.2f, %.2f)  \n\r",printtheta1motor*180/PI,printtheta2motor*180/PI,printtheta3motor*180/PI, x, y,z);
+        serial_printf(&SerialA,"IK Motor Thetas: (%.2f, %.2f, %.2f), DH Thetas:  (%.2f, %.2f, %.2f)  \n\r",theta1IK_motor*180/PI,theta2IK_motor*180/PI,theta3IK_motor*180/PI,theta1IK_DH*180/PI,theta2IK_DH*180/PI,theta3IK_DH*180/PI);
     } else {
         serial_printf(&SerialA, "Print test   \n\r");
     }
