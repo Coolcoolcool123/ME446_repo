@@ -108,6 +108,21 @@ float KI3 = 6; //6
 
 float dt = 0.001;
 
+float a0 = 0;
+float a1 = 0;
+float a2 = 3/2;
+float a3 = -1;
+float b0 = -2;
+float b1 = 6;
+float b2 = -9/2;
+float b3 = 1;
+float t_in[100];
+
+struct thetas {
+    float Theta[100];
+    float Theta_dot[100];
+    float Theta_ddot[100];
+};
 
 void mains_code(void);
 
@@ -121,6 +136,33 @@ void main(void)
 
 
 
+struct thetas theta(float time) {
+    struct thetas values;
+    t_in[0] = 0;
+    int i;
+    for (i = 1; i < 100; i++) {
+        t_in[i] = i*time/100 + t_in[i-1];
+    }
+    int ii;
+    for (ii = 0; ii<100; ii++) {
+        if(t_in[ii] <= 1) {
+            values.Theta[ii] = a0 + a1 * t_in[ii] + a2 * t_in[ii] * t_in[ii] + a3 * t_in[ii] * t_in[ii] * t_in[ii];
+            values.Theta_dot[ii] = a1 + 2 * a2 * t_in[ii] + 3 * a3 * t_in[ii] * t_in[ii];
+             values.Theta_ddot[ii] = 2*a2+ 6*a3*t_in[ii];
+        }
+        else if(t_in[ii] > 1 && t_in[ii] <= 2) {
+            values.Theta[ii] = b0 + b1 * t_in[ii] + b2 * t_in[ii] * t_in[ii] + b3 * t_in[ii] * t_in[ii] * t_in[ii];;
+            values.Theta_dot[ii] = b1 + 2 * b2 * t_in[ii] + 3 * b3 * t_in[ii] * t_in[ii];
+            values.Theta_ddot[ii] = 2*b2+ 6*b3*t_in[ii];
+        } else {
+            values.Theta[ii] = 0;
+            values.Theta_dot[ii] = 0;
+            values.Theta_ddot[ii] = 0;
+        }
+    }
+
+    return values;
+}
 
 // This function is called every 1 ms
 void lab(float theta1motor,float theta2motor,float theta3motor,float *tau1,float *tau2,float *tau3, int error) {

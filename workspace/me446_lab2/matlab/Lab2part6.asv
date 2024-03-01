@@ -1,0 +1,37 @@
+clear all;
+clc;
+
+syms a0 a1 a2 a3 b0 b1 b2 b3 t theta_da theta_db thetadot_da thetadot_db
+ 
+eqn1a = theta_da == a0 + a1*t+a2*t^2+a3*t^3;
+eqn1b = theta_db == b0 + b1*t+b2*t^2+b3*t^3;
+
+eqn2a = thetadot_da == a1 + 2*a2*t+3*a3*t^2;
+eqn2b = thetadot_db == b1 + 2*b2*t+3*b3*t^2;
+
+inputs1 = [0 0 0]; %t, theta_d, thetadot_d
+inputs2 = [1 0.5 0]; %t, theta_d, thetadot_d
+inputs3 = [2 0 0]; %t, theta_d, thetadot_d
+
+eqn1 = subs(eqn1a, [t, theta_da], [inputs1(1), inputs1(2)]);
+eqn2 = subs(eqn2a, [t, thetadot_da], [inputs1(1), inputs1(3)]);
+
+
+
+
+eqn5 = subs(eqn1m, [t, theta_da a0 a1 b0 b1], [inputs2(1), inputs2(2) a0a a1a b0a b1a]);
+eqn7 = subs(eqn3m, [t, thetadot_da a0 a1 b0 b1], [inputs2(1), inputs2(3) a0a a1a b0a b1a]);
+
+
+[a2a a3a b2a b3a] = solve([eqn1, eqn2, eqn3, eqn4],[a2 a3 b2 b3])
+
+eqn9 = subs(eqn1m, [t, theta_da], [inputs3(1), inputs3(2)]);
+eqn10 = subs(eqn2m, [t, theta_db], [inputs3(1), inputs3(2)]);
+eqn11 = subs(eqn3m, [t, thetadot_da], [inputs3(1), inputs3(3)]);
+eqn12 = subs(eqn4m, [t, thetadot_db], [inputs3(1), inputs3(3)]);
+
+% [a0a a1a a2a a3a b0a b1a b2a b3a] = solve([eqn9, eqn10, eqn11, eqn12],[a0 a1 a2 a3 b0 b1 b2 b3])
+
+[a0 a1 a2 a3 b0 b1 b2 b3] = solve([eqn1, eqn2, eqn3, eqn4, eqn5, eqn6, eqn7, eqn8, eqn9, eqn10, eqn11, eqn12], ...
+    [a0 a1 a2 a3 b0 b1 b2 b3])
+
