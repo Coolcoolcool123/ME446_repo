@@ -108,21 +108,41 @@ float KI3 = 6; //6
 
 float dt = 0.001;
 
+//
 float a0 = 0;
 float a1 = 0;
-float a2 = 3/2;
+float a2 = 1.5;
 float a3 = -1;
 float b0 = -2;
 float b1 = 6;
-float b2 = -9/2;
+float b2 = -4.5;
 float b3 = 1;
-float t_in[100];
 
-struct thetas {
-    float Theta[100];
-    float Theta_dot[100];
-    float Theta_ddot[100];
-};
+
+float Theta1 = 0;
+float Theta2 = 0;
+float Theta3 = 0;
+float Theta_dot1 = 0;
+float Theta_dot2 = 0;
+float Theta_dot3 = 0;
+float Theta_ddot1 = 0;
+float Theta_ddot2 = 0;
+float Theta_ddot3 = 0;
+
+float J1 = 0.0167;
+float J2 = 0.03;
+float J3 = 0.0128;
+
+float x1 = 0.18;
+float x2 = 0.16;
+float x3 = 0.25;
+float y1 = -0.08;
+float y2 = 0.11;
+float y3 = -0.10;
+float z1 = 0.63;
+float z2 = 0.63;
+float z3 = 0.20;
+
 
 void mains_code(void);
 
@@ -134,34 +154,97 @@ void main(void)
     mains_code();
 }
 
+void custom(float time){
+    x = .3+.1*cos(PI*time);
+    y = .1*sin(PI*time);
+    z = .35;
 
+    //taking inverse kinematic code from lab 1
+    theta1IK_DH = atan(y/x);
+    theta2IK_DH = -atan( (z-L1)/sqrt(pow(x,2)+pow(y,2)) ) - acos((pow(L2,2)+pow(x,2)+pow(y,2)+pow((z-L1),2)-pow(L3,2)) / (2*L2*sqrt(pow(x,2)+pow(y,2)+pow((z-L1),2))) );
+    theta3IK_DH =  PI - acos((pow(L2,2)+pow(L3,2)-(pow(x,2)+pow(y,2)+pow(z-L1,2)))/(2*L2*L3));
 
-struct thetas theta(float time) {
-    struct thetas values;
-    t_in[0] = 0;
-    int i;
-    for (i = 1; i < 100; i++) {
-        t_in[i] = i*time/100 + t_in[i-1];
-    }
-    int ii;
-    for (ii = 0; ii<100; ii++) {
-        if(t_in[ii] <= 1) {
-            values.Theta[ii] = a0 + a1 * t_in[ii] + a2 * t_in[ii] * t_in[ii] + a3 * t_in[ii] * t_in[ii] * t_in[ii];
-            values.Theta_dot[ii] = a1 + 2 * a2 * t_in[ii] + 3 * a3 * t_in[ii] * t_in[ii];
-             values.Theta_ddot[ii] = 2*a2+ 6*a3*t_in[ii];
-        }
-        else if(t_in[ii] > 1 && t_in[ii] <= 2) {
-            values.Theta[ii] = b0 + b1 * t_in[ii] + b2 * t_in[ii] * t_in[ii] + b3 * t_in[ii] * t_in[ii] * t_in[ii];;
-            values.Theta_dot[ii] = b1 + 2 * b2 * t_in[ii] + 3 * b3 * t_in[ii] * t_in[ii];
-            values.Theta_ddot[ii] = 2*b2+ 6*b3*t_in[ii];
-        } else {
-            values.Theta[ii] = 0;
-            values.Theta_dot[ii] = 0;
-            values.Theta_ddot[ii] = 0;
-        }
+    Theta1 = theta1IK_DH;
+    Theta2 = theta2IK_DH + PI/2;
+    Theta3 = theta3IK_DH + theta2IK_motor - PI/2;
+
     }
 
-    return values;
+//void custom(float time) {
+//    if (time < 1) {
+//        x = x1 + time*((x2-x1)/0.001);
+//        y = y1 + time*((y2-y1)/0.001);
+//        z = z1 + time*((z2-z1)/0.001);
+//        //taking inverse kinematic code from lab 1
+//        theta1IK_DH = atan(y/x);
+//        theta2IK_DH = -atan( (z-L1)/sqrt(pow(x,2)+pow(y,2)) ) - acos((pow(L2,2)+pow(x,2)+pow(y,2)+pow((z-L1),2)-pow(L3,2)) / (2*L2*sqrt(pow(x,2)+pow(y,2)+pow((z-L1),2))) );
+//        theta3IK_DH =  PI - acos((pow(L2,2)+pow(L3,2)-(pow(x,2)+pow(y,2)+pow(z-L1,2)))/(2*L2*L3));
+//
+//        //converting IK thetas to theta motors instead
+//        Theta1 = theta1IK_DH;
+//        Theta2 = theta2IK_DH + PI/2;
+//        Theta3 = theta3IK_DH + theta2IK_motor - PI/2;
+//    } else if(time < 2) {
+//        x = x2 + time*((x3-x2)/0.001);
+//        y = y2 + time*((y3-y2)/0.001);
+//        z = z2 + time*((z3-z2)/0.001);
+//        //taking inverse kinematic code from lab 1
+//        theta1IK_DH = atan(y/x);
+//        theta2IK_DH = -atan( (z-L1)/sqrt(pow(x,2)+pow(y,2)) ) - acos((pow(L2,2)+pow(x,2)+pow(y,2)+pow((z-L1),2)-pow(L3,2)) / (2*L2*sqrt(pow(x,2)+pow(y,2)+pow((z-L1),2))) );
+//        theta3IK_DH =  PI - acos((pow(L2,2)+pow(L3,2)-(pow(x,2)+pow(y,2)+pow(z-L1,2)))/(2*L2*L3));
+//        //converting IK thetas to theta motors instead
+//        Theta1 = theta1IK_DH;
+//        Theta2 = theta2IK_DH + PI/2;
+//        Theta3 = theta3IK_DH + theta2IK_motor - PI/2;
+//    } else if (time < 3) {
+//        x = x3 + time*((x1-x3)/0.001);
+//        y = y3 + time*((y1-y3)/0.001);
+//        z = z3 + time*((z1-z3)/0.001);
+//        //taking inverse kinematic code from lab 1
+//        theta1IK_DH = atan(y/x);
+//        theta2IK_DH = -atan( (z-L1)/sqrt(pow(x,2)+pow(y,2)) ) - acos((pow(L2,2)+pow(x,2)+pow(y,2)+pow((z-L1),2)-pow(L3,2)) / (2*L2*sqrt(pow(x,2)+pow(y,2)+pow((z-L1),2))) );
+//        theta3IK_DH =  PI - acos((pow(L2,2)+pow(L3,2)-(pow(x,2)+pow(y,2)+pow(z-L1,2)))/(2*L2*L3));
+//        //converting IK thetas to theta motors instead
+//        Theta1 = theta1IK_DH;
+//        Theta2 = theta2IK_DH + PI/2;
+//        Theta3 = theta3IK_DH + theta2IK_motor - PI/2;
+//    }
+//}
+
+//implementing the cubic polynomial trajectory
+void theta(float time) {
+    if (time < 1) {
+        Theta1 = a0 + a1*time +a2*pow(time,2)+a3*pow(time,3);
+        Theta2 = Theta1;
+        Theta3 = Theta1;
+        Theta_dot1 = a1 + 2 *a2*time+ 3*a3*pow(time,2);
+        Theta_dot2 = Theta_dot1;
+        Theta_dot3 = Theta_dot1;
+        Theta_ddot1 = 2*a2+6*a3*time;
+        Theta_ddot2 = Theta_ddot1;
+        Theta_ddot3 = Theta_ddot1;
+
+    } else if (time < 2) {
+        Theta1 = b0 + b1*time +b2*pow(time,2)+b3*pow(time,3);
+        Theta2 = Theta1;
+        Theta3 = Theta1;
+        Theta_dot1 = b1 + 2 *b2*time + 3*b3*pow(time,2);
+        Theta_dot2 = Theta_dot1;
+        Theta_dot3 = Theta_dot1;
+        Theta_ddot1 = 2*b2+6*b3*time;
+        Theta_ddot2 = Theta_ddot1;
+        Theta_ddot3 = Theta_ddot1;
+//    } else {
+//        Theta1 = 0;
+//        Theta2 = 0;
+//        Theta3 = 0;
+//        Theta_dot1 = 0;
+//        Theta_dot2 = 0;
+//        Theta_dot3 = 0;
+//        Theta_ddot1 = 0;
+//        Theta_ddot2 = 0;
+//        Theta_ddot3 = 0;
+    }
 }
 
 // This function is called every 1 ms
@@ -193,20 +276,23 @@ void lab(float theta1motor,float theta2motor,float theta3motor,float *tau1,float
         GpioDataRegs.GPBTOGGLE.bit.GPIO60 = 1; // Blink LED on Emergency Stop Box
     }
 
-    //Lab 2 part 5 
-    if ((mycount%2000)<1000) {
+//    //Lab 2 part 5
+//    if ((mycount%2000)<1000) {
+//
+//        theta_d1 = 0;
+//        theta_d2 = 0;
+//        theta_d3 = 0;
+//
+//    } else {
+//
+//       theta_d1 = PI/6;
+//       theta_d2 = PI/6;
+//       theta_d3 = PI/6;
+//
+//   }
 
-        theta_d1 = 0;
-        theta_d2 = 0;
-        theta_d3 = 0;
-        
-    } else {
-            
-       theta_d1 = PI/6;
-       theta_d2 = PI/6;
-       theta_d3 = PI/6;
-       
-   }
+    //theta((mycount % 2000)/1000.0);
+    custom((mycount % 4000)/1000.0);
     //implementing the 2nd method of filtering velocity
    Omega1 = (theta1motor-Theta1_old)/0.001;
    Omega1 = (Omega1+Omega1_old1 + Omega1_old2)/3.0;
@@ -232,24 +318,7 @@ void lab(float theta1motor,float theta2motor,float theta3motor,float *tau1,float
    Omega3_old2 = Omega3_old1;
    Omega3_old1 = Omega3;
    
-   //implementing the integral control
-   //solving for errors 
-   ek_1old = ek_1;
-   ek_1 = theta_d1 - theta1motor;
-   
-   ek_2old = ek_2;
-   ek_2 = theta_d2 - theta1motor;
-   
-   ek_3old = ek_3;
-   ek_3 = theta_d3 - theta1motor;
-   
-   //solving for intregral tracking error
-   IK1_old = IK1;
 
-   
-   IK2_old = IK2;
-
-   IK3_old = IK3;
 
    
    if(fabs(ek_1)>thresh) {
@@ -278,30 +347,35 @@ void lab(float theta1motor,float theta2motor,float theta3motor,float *tau1,float
   }
    
    
-    //equations to convert measured thetas in terms of theta motors
-    theta1 = theta1motor;
-    theta2 = theta2motor - PI/2;
-    theta3 = -theta2motor + theta3motor + PI/2;
-
-    //Foward Kinematics equations in terms of thetamotors (part1 Lab1, calcuations done in MATLAB)
-    x = (127.0*cos(theta1motor)*(cos(theta3motor) + sin(theta2motor)))/500.0;
-    y = (127.0*sin(theta1motor)*(cos(theta3motor) + sin(theta2motor)))/500.0;
-    z = (127.0*cos(theta2motor))/500.0 - (127.0*sin(theta3motor))/500.0 + 127.0/500.0;
-
-    //measured thetas calcuated from geometric Inverse Kinematics (part2 of Lab 1)
-    theta1IK_DH = atan(y/x);
-    theta2IK_DH = -atan( (z-L1)/sqrt(pow(x,2)+pow(y,2)) ) - acos( (pow(L2,2)+pow(x,2)+pow(y,2)+pow((z-L1),2)-pow(L3,2)) / (2*L2*sqrt(pow(x,2)+pow(y,2)+pow((z-L1),2))) );
-    theta3IK_DH =  PI - acos((pow(L2,2)+pow(L3,2)-(pow(x,2)+pow(y,2)+pow(z-L1,2)))/(2*L2*L3));
-
-    //converting IK thetas to theta motors instead
-    theta1IK_motor = theta1IK_DH;
-    theta2IK_motor = theta2IK_DH + PI/2;
-    theta3IK_motor = theta3IK_DH + theta2IK_motor - PI/2;
+//    //equations to convert measured thetas in terms of theta motors
+//    theta1 = theta1motor;
+//    theta2 = theta2motor - PI/2;
+//    theta3 = -theta2motor + theta3motor + PI/2;
+//
+//    //Foward Kinematics equations in terms of thetamotors (part1 Lab1, calcuations done in MATLAB)
+//    x = (127.0*cos(theta1motor)*(cos(theta3motor) + sin(theta2motor)))/500.0;
+//    y = (127.0*sin(theta1motor)*(cos(theta3motor) + sin(theta2motor)))/500.0;
+//    z = (127.0*cos(theta2motor))/500.0 - (127.0*sin(theta3motor))/500.0 + 127.0/500.0;
+//
+//    //measured thetas calcuated from geometric Inverse Kinematics (part2 of Lab 1)
+//    theta1IK_DH = atan(y/x);
+//    theta2IK_DH = -atan( (z-L1)/sqrt(pow(x,2)+pow(y,2)) ) - acos( (pow(L2,2)+pow(x,2)+pow(y,2)+pow((z-L1),2)-pow(L3,2)) / (2*L2*sqrt(pow(x,2)+pow(y,2)+pow((z-L1),2))) );
+//    theta3IK_DH =  PI - acos((pow(L2,2)+pow(L3,2)-(pow(x,2)+pow(y,2)+pow(z-L1,2)))/(2*L2*L3));
+//
+//    //converting IK thetas to theta motors instead
+//    theta1IK_motor = theta1IK_DH;
+//    theta2IK_motor = theta2IK_DH + PI/2;
+//    theta3IK_motor = theta3IK_DH + theta2IK_motor - PI/2;
 
     
-    *tau1 = Kp1*(theta_d1-theta1motor)-KD1*Omega1 + IK1*KI1;
-    *tau2 = Kp2*(theta_d2-theta2motor)-KD2*Omega2 + IK2*KI2;
-    *tau3 = Kp3*(theta_d3-theta3motor)-KD3*Omega3 + IK3*KI3;
+    *tau1 = Kp1*(Theta1-theta1motor)-KD1*Omega1 + IK1*KI1;
+    *tau2 = Kp2*(Theta2-theta2motor)-KD2*Omega2 + IK2*KI2;
+    *tau3 = Kp3*(Theta3-theta3motor)-KD3*Omega3 + IK3*KI3;
+//
+//    *tau1 = J1*Theta_ddot1+Kp1*(Theta1-theta1motor)+ KI1*IK1+KD1*(Theta_dot1-Omega1);
+//    *tau2 = J2*Theta_ddot2+Kp2*(Theta2-theta2motor)+ KI2*IK2+KD2*(Theta_dot2-Omega2);
+//    *tau3 = J3*Theta_ddot3+Kp3*(Theta3-theta3motor)+ KI3*IK3+KD3*(Theta_dot3-Omega3);
+
     
     
    if(*tau1>5) {
@@ -327,10 +401,25 @@ void lab(float theta1motor,float theta2motor,float theta3motor,float *tau1,float
     printtheta2motor = theta2motor;
     printtheta3motor = theta3motor;
 
-    Simulink_PlotVar1 = theta1motor;
-    Simulink_PlotVar2 = theta2motor;
-    Simulink_PlotVar3 = theta3motor;
-    Simulink_PlotVar4 = theta_d3;
+
+    //implementing the integral control
+    //solving for errors
+    ek_1old = ek_1;
+    ek_1 = Theta1 - theta1motor;
+    ek_2old = ek_2;
+    ek_2 = Theta2 - theta2motor;
+    ek_3old = ek_3;
+    ek_3 = Theta3 - theta3motor;
+
+    //solving for intregral tracking error
+    IK1_old = IK1;
+    IK2_old = IK2;
+    IK3_old = IK3;
+
+    Simulink_PlotVar1 = ek_1;
+    Simulink_PlotVar2 = ek_2;
+    Simulink_PlotVar3 = ek_3;
+    Simulink_PlotVar4 = Theta1;
 
     mycount++;
 }
