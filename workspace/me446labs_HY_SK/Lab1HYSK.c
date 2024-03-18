@@ -7,6 +7,7 @@
 #define GRAV        9.81
 
 // These two offsets are only used in the main file user_CRSRobot.c  You just need to create them here and find the correct offset and then these offset will adjust the encoder readings
+//the offset values have been adjusted in Lab 1, 1.2
 float offset_Enc2_rad = -0.45; //-0.37;
 float offset_Enc3_rad = 0.23; //0.27;
 
@@ -42,19 +43,23 @@ float L1 = 0.254;
 float L2 = 0.254;
 float L3 = 0.254;
 
-//values that we need to print (part 2 of lab1)
+//setting global variables that we would need to print in lab1 part 2
+//the variables for the position of the end effector
 float x = 0;
 float y = 0;
 float z = 0;
 
+//variables for the joint angles.
 float theta1 = 0;
 float theta2 = 0;
 float theta3 = 0;
 
+//thetas that were calculated with inverse kinematics using DH parameters 
 float theta1IK_DH = 0;
 float theta2IK_DH = 0;
 float theta3IK_DH = 0;
 
+//the thetas found using inverse kinematics converted to angles of the motors 
 float theta1IK_motor = 0;
 float theta2IK_motor = 0;
 float theta3IK_motor = 0;
@@ -138,6 +143,7 @@ void lab(float theta1motor,float theta2motor,float theta3motor,float *tau1,float
 
 void printing(void){
     if (whattoprint == 0) {
+        //currently printing the motor thetas, the xyz potision of the end effector, the motor thetas found using inverse kinematics, and the joint thetas found using DH parmeters and inverse kinematics  
         serial_printf(&SerialA, "Motor Thetas:(%.2f, %.2f, %.2f), FK (xyz): (%.2f, %.2f, %.2f)  \n\r",printtheta1motor*180/PI,printtheta2motor*180/PI,printtheta3motor*180/PI, x, y,z);
         serial_printf(&SerialA,"IK Motor Thetas: (%.2f, %.2f, %.2f), DH Thetas:  (%.2f, %.2f, %.2f)  \n\r",theta1IK_motor*180/PI,theta2IK_motor*180/PI,theta3IK_motor*180/PI,theta1IK_DH*180/PI,theta2IK_DH*180/PI,theta3IK_DH*180/PI);
     } else {

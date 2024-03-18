@@ -70,6 +70,9 @@ float Kp3 = 120; //120
 float KD1 = 0.9; // 0.9
 float KD2 = 4; //4
 float KD3 = 6; //6
+float KI1 = 0.2; // 0.2
+float KI2 = 4; //4
+float KI3 = 6; //6
 
 //variables for 2nd method of filtering velocity
 float Theta1_old = 0;
@@ -102,9 +105,6 @@ float IK2_old = 0;
 float IK3 = 0;
 float IK3_old = 0;
 
-float KI1 = 0.2; // 0.2
-float KI2 = 4; //4
-float KI3 = 6; //6
 
 float dt = 0.001;
 
@@ -155,7 +155,7 @@ void main(void)
 }
 
 void custom(float time){
-    x = .3+.1*cos(PI*time);
+    x = .30+.1*cos(PI*time);
     y = .1*sin(PI*time);
     z = .35;
 
@@ -166,7 +166,7 @@ void custom(float time){
 
     Theta1 = theta1IK_DH;
     Theta2 = theta2IK_DH + PI/2;
-    Theta3 = theta3IK_DH + theta2IK_motor - PI/2;
+    Theta3 = theta3IK_DH + Theta2 - PI/2;
 
     }
 
@@ -291,7 +291,7 @@ void lab(float theta1motor,float theta2motor,float theta3motor,float *tau1,float
 //
 //   }
 
-    //theta((mycount % 2000)/1000.0);
+//    theta((mycount % 2000)/1000.0);
     custom((mycount % 4000)/1000.0);
     //implementing the 2nd method of filtering velocity
    Omega1 = (theta1motor-Theta1_old)/0.001;
@@ -416,9 +416,9 @@ void lab(float theta1motor,float theta2motor,float theta3motor,float *tau1,float
     IK2_old = IK2;
     IK3_old = IK3;
 
-    Simulink_PlotVar1 = ek_1;
-    Simulink_PlotVar2 = ek_2;
-    Simulink_PlotVar3 = ek_3;
+    Simulink_PlotVar1 = x;
+    Simulink_PlotVar2 = y;
+    Simulink_PlotVar3 = z;
     Simulink_PlotVar4 = Theta1;
 
     mycount++;

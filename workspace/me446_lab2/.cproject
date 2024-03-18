@@ -186,4 +186,5 @@
 		<project id="me446_lab_starter.com.ti.ccstudio.buildDefinitions.C2000.ProjectType.842417548" name="C2000" projectType="com.ti.ccstudio.buildDefinitions.C2000.ProjectType"/>
 	</storageModule>
 	<storageModule moduleId="scannerConfiguration"/>
+	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
 </cproject>
