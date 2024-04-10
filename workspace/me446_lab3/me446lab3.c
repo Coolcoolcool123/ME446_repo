@@ -225,12 +225,12 @@ float RT31 = 0;
 float RT32 = 0;
 float RT33 = 0;
 
-float xa = 0.4;
-float ya = -0.2;
+float xa = 0.2;
+float ya = -0.3;
 float za = .6;
-float xb = .4;
+float xb = .35;
 float yb = 0.2;
-float zb = .3;
+float zb = .6;
 
 float deltax = 0;
 float deltay = 0;
@@ -250,9 +250,9 @@ float xd_dot = 0;
 float yd_dot = 0;
 float zd_dot = 0;
 
-float KPx = 150.0; //300 for lab 3 part 2
-float KPy = 150.0; //300 for lab 3 part 2
-float KPz = 150.0; //300 for lab 3 part 2
+float KPx = 300.0; //300 for lab 3 part 2
+float KPy = 300.0; //300 for lab 3 part 2
+float KPz = 300.0; //300 for lab 3 part 2
 
 float KDx = 15.0; //10 for lab 3 part 2
 float KDy = 15.0; //10 for lab 3 part 2
@@ -534,8 +534,8 @@ void lab(float theta1motor,float theta2motor,float theta3motor,float *tau1,float
     deltay = (yb - ya);
     deltaz = (zb - za);
 
-    ttotal = 1; // sqrt(pow(deltax,2)+pow(deltay,2)+pow(deltaz,2))/desiredspeed; //CHECK THIS BEFORE CONTINUING
-    t = mycount%2000;
+    ttotal = 2; // sqrt(pow(deltax,2)+pow(deltay,2)+pow(deltaz,2))/desiredspeed; //CHECK THIS BEFORE CONTINUING
+    t = mycount%4000;
 
     part5(t);
 
@@ -555,7 +555,7 @@ void lab(float theta1motor,float theta2motor,float theta3motor,float *tau1,float
 //   *tau3 = ff3*u_fric3 - (JT_31*R11 + JT_32*R21 + JT_33*R31)*(KPx*RT11*(x - xd) + KDx*RT11*(x_dot - xd_dot) + KPx*RT12*(y - yd) + KDx*RT12*(y_dot - yd_dot) + KPx*RT13*(z - zd) + KDx*RT13*(z_dot - zd_dot)) - (JT_31*R12 + JT_32*R22 + JT_33*R32)*(KPy*RT21*(x - xd) + KDy*RT21*(x_dot - xd_dot) + KPy*RT22*(y - yd) + KDy*RT22*(y_dot - yd_dot) + KPy*RT23*(z - zd) + KDy*RT23*(z_dot - zd_dot)) - (JT_31*R13 + JT_32*R23 + JT_33*R33)*(KPz*RT31*(x - xd) + KDz*RT31*(x_dot - xd_dot) + KPz*RT32*(y - yd) + KDz*RT32*(y_dot - yd_dot) + KPz*RT33*(z - zd) + KDz*RT33*(z_dot - zd_dot));
 
 
-    //tau values for lab 3 part 4
+    //tau values for lab 3 part 5
    *tau1 = ff1*u_fric1 - (JT_11*R11 + JT_12*R21 + JT_13*R31)*(KPx*RT11*(x - xd) + KDx*RT11*(x_dot - xd_dot) + KPx*RT12*(y - yd) + KDx*RT12*(y_dot - yd_dot) + KPx*RT13*(z - zd) + KDx*RT13*(z_dot - zd_dot)) - (JT_11*R12 + JT_12*R22 + JT_13*R32)*(KPy*RT21*(x - xd) + KDy*RT21*(x_dot - xd_dot) + KPy*RT22*(y - yd) + KDy*RT22*(y_dot - yd_dot) + KPy*RT23*(z - zd) + KDy*RT23*(z_dot - zd_dot)) - (JT_11*R13 + JT_12*R23 + JT_13*R33)*(KPz*RT31*(x - xd) + KDz*RT31*(x_dot - xd_dot) + KPz*RT32*(y - yd) + KDz*RT32*(y_dot - yd_dot) + KPz*RT33*(z - zd) + KDz*RT33*(z_dot - zd_dot));
    *tau2 = ff2*u_fric2 - (JT_21*R11 + JT_22*R21 + JT_23*R31)*(KPx*RT11*(x - xd) + KDx*RT11*(x_dot - xd_dot) + KPx*RT12*(y - yd) + KDx*RT12*(y_dot - yd_dot) + KPx*RT13*(z - zd) + KDx*RT13*(z_dot - zd_dot)) - (JT_21*R12 + JT_22*R22 + JT_23*R32)*(KPy*RT21*(x - xd) + KDy*RT21*(x_dot - xd_dot) + KPy*RT22*(y - yd) + KDy*RT22*(y_dot - yd_dot) + KPy*RT23*(z - zd) + KDy*RT23*(z_dot - zd_dot)) - (JT_21*R13 + JT_22*R23 + JT_23*R33)*(KPz*RT31*(x - xd) + KDz*RT31*(x_dot - xd_dot) + KPz*RT32*(y - yd) + KDz*RT32*(y_dot - yd_dot) + KPz*RT33*(z - zd) + KDz*RT33*(z_dot - zd_dot));
    *tau3 = ff3*u_fric3 - (JT_31*R11 + JT_32*R21 + JT_33*R31)*(KPx*RT11*(x - xd) + KDx*RT11*(x_dot - xd_dot) + KPx*RT12*(y - yd) + KDx*RT12*(y_dot - yd_dot) + KPx*RT13*(z - zd) + KDx*RT13*(z_dot - zd_dot)) - (JT_31*R12 + JT_32*R22 + JT_33*R32)*(KPy*RT21*(x - xd) + KDy*RT21*(x_dot - xd_dot) + KPy*RT22*(y - yd) + KDy*RT22*(y_dot - yd_dot) + KPy*RT23*(z - zd) + KDy*RT23*(z_dot - zd_dot)) - (JT_31*R13 + JT_32*R23 + JT_33*R33)*(KPz*RT31*(x - xd) + KDz*RT31*(x_dot - xd_dot) + KPz*RT32*(y - yd) + KDz*RT32*(y_dot - yd_dot) + KPz*RT33*(z - zd) + KDz*RT33*(z_dot - zd_dot));
