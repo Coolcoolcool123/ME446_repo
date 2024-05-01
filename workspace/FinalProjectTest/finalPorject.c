@@ -47,31 +47,8 @@ float x = 0;
 float y = 0;
 float z = 0;
 
-float theta1 = 0;
-float theta2 = 0;
-float theta3 = 0;
-
-float theta1IK_DH = 0;
-float theta2IK_DH = 0;
-float theta3IK_DH = 0;
-
-float theta1IK_motor = 0;
-float theta2IK_motor = 0;
-float theta3IK_motor = 0;
-
-//lab 2 global variables
-float theta_d1 = 0;
-float theta_d2 = 0;
-float theta_d3 = 0;
-
-float Kp1 = 12; //12
-float Kp2 = 100; //100
-float Kp3 = 120; //120
-float KD1 = 0.9; // 0.9
-float KD2 = 4; //4
-float KD3 = 6; //6
-
 //variables for 2nd method of filtering velocity
+//used to calculate the desired velocity 
 float Theta1_old = 0;
 float Omega1_old1 = 0;
 float Omega1_old2 = 0;
@@ -102,10 +79,7 @@ float IK2_old = 0;
 float IK3 = 0;
 float IK3_old = 0;
 
-float KI1 = 0.2; // 0.2
-float KI2 = 4; //4
-float KI3 = 6; //6
-
+//the time interval the main function is called
 float dt = 0.001;
 
 
@@ -113,19 +87,8 @@ float dt = 0.001;
 float Theta1 = 0;
 float Theta2 = 0;
 float Theta3 = 0;
-float Theta_dot1 = 0;
-float Theta_dot2 = 0;
-float Theta_dot3 = 0;
-float Theta_ddot1 = 0;
-float Theta_ddot2 = 0;
-float Theta_ddot3 = 0;
 
-float J1 = 0.0167;
-float J2 = 0.03;
-float J3 = 0.0128;
-
-//variables for Lab 3
-//viscous and coulmob values
+//viscous and coulomb values that were used to find the friction compensation of the CRS robot
 float Viscous_positive1 = 0.2513;
 float Viscous_negative1 = 0.2477;
 float Coulomb_positive1 = 0.33487;
@@ -158,6 +121,7 @@ float u_fric3 = 0;
 
 
 //starter code global varables
+//used to calculate the Jacobian and Rotational matrices
 float cosq1 = 0;
 float sinq1 = 0;
 float cosq2 = 0;
@@ -206,15 +170,12 @@ float RT31 = 0;
 float RT32 = 0;
 float RT33 = 0;
 
-
+//time related variables for straight line trajecotry calculations
 float tstart = 0;
 float ttotal = 0;
 float t = 0;
 
-
-
-float desiredspeed = 0.1;
-
+//desired coordinate variables. The initalized values here do not matter. they get redefined in the code
 float xd = 0.254;
 float yd = 0.0;
 float zd = .254*2;
@@ -222,6 +183,8 @@ float xd_dot = 0;
 float yd_dot = 0;
 float zd_dot = 0;
 
+
+//gains for control equations 
 float KPx = 300.0; //300 for lab 3 part 2
 float KPy = 300.0; //300 for lab 3 part 2
 float KPz = 300.0; //300 for lab 3 part 2
@@ -230,6 +193,8 @@ float KDx = 30.0; //10 for lab 3 part 2
 float KDy = 30.0; //10 for lab 3 part 2
 float KDz = 30.0; //10 for lab 3 part 2
 
+
+//variables used for velocity filtering
 float x_dot = 0;
 float x_dot_old1 = 0;
 float x_dot_old2 = 0;
@@ -243,23 +208,29 @@ float x_old = 0.139;
 float y_old = 0.000;
 float z_old = 0.424;
 
+
 float Fx = 0;
 float Fy = 0;
 float Fz = 0;
 
-//lab 3 part 3
-float Fzcmd = 0;
-float Kt = 6;
 
 
 
-
+/*
+this initializes a data structure. the data structure contains 3 float values that represent a waypoint coordinate (x,y,z)
+this will be use to define where the end point of the CRS robot should be moving to  
+*/
 typedef struct Waypoint {
     float xDes;
     float yDes;
     float zDes;
 } Waypoint;
 
+
+/*
+this initalizes an array that is filled with the waypoint data structure that was define above
+each waypoint coordinate represents the posiiton the CRS robot needs to move towards
+*/
 Waypoint points[] = {{0.139, 0, 0.424}, //initial position 0
                      {0.294,0,0.508}, //move in a straight line (in the x direction) 1
                      {0.23,0.25,0.43}, //starts moving towards peg hole 2
@@ -272,68 +243,59 @@ Waypoint points[] = {{0.139, 0, 0.424}, //initial position 0
                      {0.233, 0.100, 0.4},//middle waypoint towards zigzag 7
                      {0.375, 0.101, 0.215}, //start of zigzag 8
                      {0.379, 0.095, 0.215}, //pasue at start of zigzag 9
-                     {0.398, 0.060, 0.215}, // 1st point corner 10
-                     {0.390, 0.042, 0.215}, // 2st point corner 11
-                     {0.379, 0.038, 0.215}, // 3st point corner 12
-                     {0.324, 0.049, 0.215}, // 1st point corner 13
-                     {0.325, 0.040, 0.215}, // 2st point corner 14
-                     {0.312, 0.030, 0.215}, // 3st point corner 15
+                     {0.398, 0.060, 0.215}, // 1st point of the 1st corner 10
+                     {0.390, 0.042, 0.215}, // 2st point of the 1st corner 11
+                     {0.379, 0.038, 0.215}, // 3st point of the 1st corner 12
+                     {0.324, 0.049, 0.215}, // 1st point of the 2nd corner 13
+                     {0.325, 0.040, 0.215}, // 2st point of the 2nd corner 14
+                     {0.312, 0.030, 0.215}, // 3st point of the 2nd  corner 15
                      {0.370, -0.044, 0.215}, // zigzag exit 16
-                     {0.379, -0.070, 0.215}, // exit zigzag more 17
-                     {0.354,0,0.400}, // back to initial position 18
+                     {0.379, -0.070, 0.215}, // move slightly away from the zigzag exit 17
+                     {0.354,0,0.400}, // move towards the egg 18
 
                      {0.200, 0.177, 0.305}, //above egg 19
                      {0.200, 0.177, 0.305}, //pause 20
                      {0.200, 0.177, 0.2875}, //press egg 21
-                     {0.200, 0.177, 0.2875}, //pause egg 22
+                     {0.200, 0.177, 0.2875}, //pause while pressing the egg  22
                      {0.200, 0.177, 0.305}, //back to above egg 23
                      {0.139, 0, 0.424} //back to initial position 24
                     };
 
+//this variable is used to keep track of which waypoint is curently being executed 
+int index = 0;
+
+/*
+an array of floats that represents the start time if the waypoint movement
+*/
 float ts[] = {0, //0
               2, // time of straight line movement 1
               5, //end of line to middle waypoint towards peg hole 2
               8, //middle of peg hole waypoint to above the peg hole 3
               10, //go into peg hole 4
               11, //stay inside peg hole 5
-            12, //come out of peg hole 6
-        16, //going towards zigzag 7
-//              2, //7 2
-//              4, //8 3
-//              5, //9 4
-//              6, //10 5
-//              7, // 11 6
-//              8, //12 7
-//              9, //13 8
-//              10, //14 9
-//              11, //15 10
-//              12, //16 11
-//              13 //22 12
+              12, //come out of peg hole 6
+              16, //going towards zigzag 7
+              19, //go to the zigzag entrance 8
+              19.5, //9
+              20, //10
+              20.25,//11
+              20.5, //12
+              21.5, //13
+              21.75, //14
+              22, //15
+              23, //16
+              24, //17
 
-
-
-           19, //go to the zigzag entrance 8
-           19.5, //9
-           20, //10
-           20.25,//11
-           20.5, //12
-           21.5, //13
-           21.75, //14
-           22, //15
-           23, //16
-           24, //17
-
-           27, //initital position 18
-           29, //hovver aboce eg 19
-           30, //press egg 20
-           31, //pause 21
-           32, //above egg 22
-           33, //23
-           34 //24
+              27, //initital position 18
+              29, //hovver aboce eg 19
+              30, //press egg 20
+              31, //pause 21
+              32, //above egg 22
+              33, //23
+              34 //24
 };
 
-int index = 0;
-int a = sizeof(ts)/sizeof(ts[0]);
+
 void mains_code(void);
 
 //
@@ -344,8 +306,19 @@ void main(void)
     mains_code();
 }
 
+/*
+this function changes the gains of the controller when the index reaches a certain point
+The gains will weakened the x axis of the CRS robot as it moves through the zigzag. 
+During the 2nd corner of the zigzag, the other directions are strengthed to help move through the corner
+The gains frames are constantly rotated so the x axis of the CRS robot will be parallel to the zigzag route.
+This helps the robot slide through the zigzag better
 
+Inputs:
+    index: where in the Waypoints array the CRS robot is currently executing
+
+*/
 void gains(int index) {
+    //weakens the gains and rotates the frames as the robot is going though the zigzag
     if (index == 10) {
         thetaz = 36.87 / 180 * PI;
         KPx = 10; //300 for lab 3 part 2
@@ -402,42 +375,59 @@ void gains(int index) {
         KPy = 500;
         KDz = 20;
         KDy = 20;
-    } else if(index == 4){
-                KPx = 100;
-                KDx = 1.0;
-                KPy = 100;
-                KDy = 1;
+    } else if(index == 4) {
+        //this weakens the gains when the robot is putting the peg into the hole may not be necessary
+            KPx = 100;
+            KDx = 1.0;
+            KPy = 100;
+            KDy = 1;
 
     } else {
-
+        //resets the frame rotations and gain values when the robot is going through the other waypoints 
        thetaz = 0;
 
+       KPx = 300.0; 
+       KPy = 300.0; 
+       KPz = 300.0; 
 
-       KPx = 300.0; //300 for lab 3 part 2
-       KPy = 300.0; //300 for lab 3 part 2
-       KPz = 300.0; //300 for lab 3 part 2
-
-       KDx = 30.0; //10 for lab 3 part 2
-       KDy = 30.0; //10 for lab 3 part 2
-       KDz = 30.0; //10 for lab 3 part 2
+       KDx = 30.0; 
+       KDy = 30.0;
+       KDz = 30.0; 
 
     }
 }
 
-void part5(float time,float t1, float t2, Waypoint Pos1, Waypoint Pos2) {
+/*
+Straight Line trajectory implemntation
+This function calculates the desired coordinates that the CRS robot wants to get to
+
+
+Inputs: 
+    time: how long (in ms) this program has been executing 
+    t1: the start time of the  trajectory
+    t2: the end time of the trajectory
+    Pos1: The starting Waypoint of the trajectory 
+    Pos2: the ending waypoint of the trajectory
+*/
+void Trajectory(float time,float t1, float t2, Waypoint Pos1, Waypoint Pos2) {
+    //converts time into seconds
     float Time = time/1000;
 
     tstart = t1;
     xd = (Pos2.xDes-Pos1.xDes) * (Time-t1)/(t2-t1) + Pos1.xDes;
     yd = (Pos2.yDes-Pos1.yDes) * (Time-t1)/(t2-t1) + Pos1.yDes;
     zd = (Pos2.zDes-Pos1.zDes) * (Time-t1)/(t2-t1) + Pos1.zDes;
+
+    //if the time is equal to the end time of the waypoint, the index is increased. This signifies that the robot can move on
+    //to the next Waypoint
     if(Time == t2) {
         index++;
     }
 
 }
 
-//lab 3 part 1
+//This function calcaultes the fricition compensation needed for the controller
+//calcuations done in lab 3
 void FricComp() {
     if (Omega1 > minimum_velocity1) {
         u_fric1 = Viscous_positive1*Omega1 + Coulomb_positive1;
@@ -513,6 +503,7 @@ void lab(float theta1motor,float theta2motor,float theta3motor,float *tau1,float
     RT13 = R31 = -cosx*siny;
     RT23 = R32 = sinx;
     RT33 = R33 = cosx*cosy;
+
     // Jacobian Transpose
     cosq1 = cos(theta1motor);
     sinq1 = sin(theta1motor);
@@ -530,18 +521,17 @@ void lab(float theta1motor,float theta2motor,float theta3motor,float *tau1,float
     JT_32 = -0.254*sinq1*sinq3;
     JT_33 = -0.254*cosq3;
 
+    //fowards kinematics of the CRS robot
     x = (127.0*cos(theta1motor)*(cos(theta3motor) + sin(theta2motor)))/500.0;
     y = (127.0*sin(theta1motor)*(cos(theta3motor) + sin(theta2motor)))/500.0;
     z = (127.0*cos(theta2motor))/500.0 - (127.0*sin(theta3motor))/500.0 + 127.0/500.0;
 
+    //velocity filtering using 2nd method of filtering 
    Omega1 = (theta1motor-Theta1_old)/0.001;
    Omega1 = (Omega1+Omega1_old1 + Omega1_old2)/3.0;
 
-
-
    Omega2 = (theta2motor-Theta2_old)/0.001;
    Omega2 = (Omega2+Omega2_old1 + Omega2_old2)/3.0;
-
 
    Omega3 = (theta3motor-Theta3_old)/0.001;
    Omega3 = (Omega3+Omega3_old1 + Omega3_old2)/3.0;
@@ -572,19 +562,26 @@ void lab(float theta1motor,float theta2motor,float theta3motor,float *tau1,float
 
   }
 
-
-
-
-
+    //The entire path takes 34 seconds so this makes 
     t = mycount%34000;
+
+    //resets the index to 0 when the full trajectory is finished. Used for debugging
     if (t == 0) {
         index = 0;
     }
 
+
+    //calls the gains function 
     gains(index);
-    part5(t, ts[index], ts[index+1], points[index], points[index+1]);
 
 
+    /*
+    calls the trajectory function
+    this calcautes the desired coordinates for the control equations    
+    */
+    Trajectory(t, ts[index], ts[index+1], points[index], points[index+1]);
+
+    //calcuates velocity using 2nd order filtering  
     x_dot = (x-x_old)/0.001;
     x_dot = (x_dot+x_dot_old1 + x_dot_old2)/3.0;
 
@@ -594,18 +591,20 @@ void lab(float theta1motor,float theta2motor,float theta3motor,float *tau1,float
     z_dot = (z-z_old)/0.001;
     z_dot = (z_dot+z_dot_old1 + z_dot_old2)/3.0;
 
+
+    //Force calculations needed for the control equations
     Fx = KPx*(xd-x)+KDx*(xd_dot-x_dot);
     Fy = KPy*(yd-y)+KDy*(yd_dot-y_dot);
     Fz = KPz*(zd-z)+KDz*(zd_dot-z_dot);
 
-    //tau values for lab 3 part 5
+    //control equations for the CRS robot. Uses Impedence Control
    *tau1 = ff1*u_fric1 - (JT_11*R11 + JT_12*R21 + JT_13*R31)*(KPx*RT11*(x - xd) + KDx*RT11*(x_dot - xd_dot) + KPx*RT12*(y - yd) + KDx*RT12*(y_dot - yd_dot) + KPx*RT13*(z - zd) + KDx*RT13*(z_dot - zd_dot)) - (JT_11*R12 + JT_12*R22 + JT_13*R32)*(KPy*RT21*(x - xd) + KDy*RT21*(x_dot - xd_dot) + KPy*RT22*(y - yd) + KDy*RT22*(y_dot - yd_dot) + KPy*RT23*(z - zd) + KDy*RT23*(z_dot - zd_dot)) - (JT_11*R13 + JT_12*R23 + JT_13*R33)*(KPz*RT31*(x - xd) + KDz*RT31*(x_dot - xd_dot) + KPz*RT32*(y - yd) + KDz*RT32*(y_dot - yd_dot) + KPz*RT33*(z - zd) + KDz*RT33*(z_dot - zd_dot));
    *tau2 = ff2*u_fric2 - (JT_21*R11 + JT_22*R21 + JT_23*R31)*(KPx*RT11*(x - xd) + KDx*RT11*(x_dot - xd_dot) + KPx*RT12*(y - yd) + KDx*RT12*(y_dot - yd_dot) + KPx*RT13*(z - zd) + KDx*RT13*(z_dot - zd_dot)) - (JT_21*R12 + JT_22*R22 + JT_23*R32)*(KPy*RT21*(x - xd) + KDy*RT21*(x_dot - xd_dot) + KPy*RT22*(y - yd) + KDy*RT22*(y_dot - yd_dot) + KPy*RT23*(z - zd) + KDy*RT23*(z_dot - zd_dot)) - (JT_21*R13 + JT_22*R23 + JT_23*R33)*(KPz*RT31*(x - xd) + KDz*RT31*(x_dot - xd_dot) + KPz*RT32*(y - yd) + KDz*RT32*(y_dot - yd_dot) + KPz*RT33*(z - zd) + KDz*RT33*(z_dot - zd_dot));
    *tau3 = ff3*u_fric3 - (JT_31*R11 + JT_32*R21 + JT_33*R31)*(KPx*RT11*(x - xd) + KDx*RT11*(x_dot - xd_dot) + KPx*RT12*(y - yd) + KDx*RT12*(y_dot - yd_dot) + KPx*RT13*(z - zd) + KDx*RT13*(z_dot - zd_dot)) - (JT_31*R12 + JT_32*R22 + JT_33*R32)*(KPy*RT21*(x - xd) + KDy*RT21*(x_dot - xd_dot) + KPy*RT22*(y - yd) + KDy*RT22*(y_dot - yd_dot) + KPy*RT23*(z - zd) + KDy*RT23*(z_dot - zd_dot)) - (JT_31*R13 + JT_32*R23 + JT_33*R33)*(KPz*RT31*(x - xd) + KDz*RT31*(x_dot - xd_dot) + KPz*RT32*(y - yd) + KDz*RT32*(y_dot - yd_dot) + KPz*RT33*(z - zd) + KDz*RT33*(z_dot - zd_dot));
 
 
 
-
+//saturates the tau values so that the CRS robot doesnt go crazy
    if(*tau1>5) {
        *tau1 =5;
    } if (*tau1<-5){
